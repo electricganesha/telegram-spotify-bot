@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "./start.sh"
+    "start": "concurrently \"npx ts-node index.ts\" \"npx ts-node server.ts\"",
+    "start-server": "npx ts-node server.ts",
+    "start-bot": "npx ts-node index.ts"
   },
   "keywords": [],
   "author": "",

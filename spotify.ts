@@ -14,8 +14,11 @@ let refreshToken: string | null = null;
 
 export const getAccessToken = async () => {
   try {
-    const response = await fetch("http://localhost:8888/token");
+    console.log("getAccessToken");
+    const response = await fetch(`${process.env.SERVER_URL}/token`);
     const data = await response.json();
+    console.log("got access token", data.accessToken);
+    console.log("got refresh token", data.refreshToken);
     spotifyApi.setRefreshToken(data.refreshToken);
     spotifyApi.setAccessToken(data.accessToken);
   } catch (error) {

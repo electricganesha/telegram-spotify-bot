@@ -1,8 +1,13 @@
 import express from "express";
 import { spotifyApi } from "./spotify";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
-const port = 8888;
+
+// Use the PORT environment variable provided by Heroku or default to 8888
+const port = process.env.PORT || 8888;
 
 let accessToken: string | null = null;
 let refreshToken: string | null = null;
@@ -40,7 +45,7 @@ app.get("/token", (_req, res) => {
   }
 });
 
-// Start the Express server
+// Start the Express server on the correct port
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });
