@@ -4,14 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "npx ts-node index.ts",
-    "start-server": "ts-node server.ts",
-    "populate-history": "ts-node history.ts"
+    "start": "./start.sh"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "concurrently": "^8.2.2",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "node-telegram-bot-api": "^0.66.0",
