@@ -49,3 +49,25 @@ app.get("/token", (_req, res) => {
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });
+
+app.get("/refresh_token", function (req, res) {
+  const accessToken = req.query.accessToken;
+  const refreshToken = req.query.refreshToken;
+
+  spotifyApi.setAccessToken(accessToken);
+  spotifyApi.setRefreshToken(refreshToken);
+
+  spotifyApi.refreshAccessToken().then(
+    function (data) {
+      // Save the access token so that it's used in future calls
+      spotifyApi.setAccessToken(data.body["access_token"]);
+      res.json({
+        accessToken: data.body["access_token"],
+        refreshToken: refreshToken,
+      });
+    },
+    function (err) {
+      console.log("Could not refresh access token", err);
+    }
+  );
+});

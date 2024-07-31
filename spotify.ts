@@ -13,17 +13,39 @@ export const spotifyApi = new SpotifyWebApi({
 let refreshToken: string | null = null;
 
 export const getAccessToken = async () => {
+  // create token
   try {
-    console.log("getAccessToken");
+    await fetch(`${process.env.SERVER_URL}/login`);
+  } catch (error) {
+    console.error("Error logging in:", error);
+  }
+  try {
     const response = await fetch(`${process.env.SERVER_URL}/token`);
     const data = await response.json();
-    console.log("got access token", data.accessToken);
-    console.log("got refresh token", data.refreshToken);
+
     spotifyApi.setRefreshToken(data.refreshToken);
     spotifyApi.setAccessToken(data.accessToken);
   } catch (error) {
     console.error("Error fetching access token:", error);
   }
+};
+
+export const getRefreshToken = async () => {
+  const response = await fetch(
+    `${
+      process.env.SERVER_URL
+    }/refresh_token?accessToken=${spotifyApi.getAccessToken()}&refreshToken=${spotifyApi.getRefreshToken()}`
+  );
+
+  const data = await response.json();
+
+  spotifyApi.setAccessToken(data.accessToken);
+  spotifyApi.setRefreshToken(data.refreshToken);
+};
+
+export const setTokens = () => {
+  spotifyApi.setRefreshToken(process.env.SPOTIFY_REFRESH_TOKEN);
+  spotifyApi.setAccessToken(process.env.SPOTIFY_ACCESS_TOKEN);
 };
 
 export const searchSpotify = async (
@@ -40,6 +62,7 @@ export const searchSpotify = async (
 };
 
 export const addToPlaylist = async (trackId: string, playlistId: string) => {
+  getRefreshToken();
   const data = await spotifyApi.refreshAccessToken();
   spotifyApi.setAccessToken(data.body["access_token"]);
 

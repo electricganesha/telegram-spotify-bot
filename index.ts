@@ -4,8 +4,8 @@ import { Message } from "node-telegram-bot-api";
 import {
   addToPlaylist,
   extractSongInfoFromSpotifyLink,
-  getAccessToken,
   searchSpotify,
+  setTokens,
 } from "./spotify";
 
 dotenv.config();
@@ -19,15 +19,16 @@ const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
 
 bot.on("message", async (msg: Message) => {
   const chatId = msg.chat.id;
-  console.log("chatId ", chatId);
+
   const text = msg.text;
 
   if (!text?.includes("open.spotify.com/track/")) {
     return;
   }
 
+  setTokens();
+
   if (text) {
-    await getAccessToken();
     const songInfo = await extractSongInfoFromSpotifyLink(text);
 
     if (songInfo) {
@@ -39,17 +40,24 @@ bot.on("message", async (msg: Message) => {
         );
         if (trackId) {
           await addToPlaylist(songInfo.id, SPOTIFY_PLAYLIST_ID);
+          console.log(
+            `Added ${songInfo.song} by ${songInfo.artist} to the playlist!`
+          );
           bot.sendMessage(
             chatId,
             `Added ${songInfo.song} by ${songInfo.artist} to the playlist!`
           );
         } else {
+          console.log(
+            `Could not find ${songInfo.song} by ${songInfo.artist} on Spotify.`
+          );
           bot.sendMessage(
             chatId,
             `Could not find ${songInfo.song} by ${songInfo.artist} on Spotify.`
           );
         }
       } catch (error) {
+        console.log("An error occurred while adding the song to the playlist.");
         bot.sendMessage(
           chatId,
           "An error occurred while adding the song to the playlist."
