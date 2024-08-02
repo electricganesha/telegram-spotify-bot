@@ -1,11 +1,11 @@
 import dotenv from "dotenv";
-
 import { Message } from "node-telegram-bot-api";
 import {
   addToPlaylist,
   extractSongInfoFromSpotifyLink,
-  searchSpotify,
-  setTokens,
+  getAndSetTokens,
+  getIsUserAuthenticated,
+  extractTrackIdFromSpotifyLink,
 } from "./spotify";
 
 dotenv.config();
@@ -19,46 +19,38 @@ const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
 
 bot.on("message", async (msg: Message) => {
   const chatId = msg.chat.id;
-
   const text = msg.text;
 
   if (!text?.includes("open.spotify.com/track/")) {
     return;
   }
 
-  setTokens();
+  const isUserAuthenticated = await getIsUserAuthenticated();
+
+  if (!isUserAuthenticated) {
+    await getAndSetTokens();
+  }
 
   if (text) {
+    const trackId = await extractTrackIdFromSpotifyLink(text);
     const songInfo = await extractSongInfoFromSpotifyLink(text);
 
     if (songInfo) {
       try {
-        const trackId = await searchSpotify(
-          songInfo.song,
-          songInfo.artist,
-          songInfo.id
-        );
         if (trackId) {
           await addToPlaylist(songInfo.id, SPOTIFY_PLAYLIST_ID);
-          console.log(
-            `Added ${songInfo.song} by ${songInfo.artist} to the playlist!`
-          );
-          bot.sendMessage(
+          botSendMessageAndLog(
             chatId,
             `Added ${songInfo.song} by ${songInfo.artist} to the playlist!`
           );
         } else {
-          console.log(
-            `Could not find ${songInfo.song} by ${songInfo.artist} on Spotify.`
-          );
-          bot.sendMessage(
+          botSendMessageAndLog(
             chatId,
             `Could not find ${songInfo.song} by ${songInfo.artist} on Spotify.`
           );
         }
       } catch (error) {
-        console.log("An error occurred while adding the song to the playlist.");
-        bot.sendMessage(
+        botSendMessageAndLog(
           chatId,
           "An error occurred while adding the song to the playlist."
         );
@@ -68,3 +60,8 @@ bot.on("message", async (msg: Message) => {
     }
   }
 });
+
+const botSendMessageAndLog = async (chatId: number, message: string) => {
+  console.log(message);
+  bot.sendMessage(chatId, message);
+};

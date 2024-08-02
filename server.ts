@@ -1,12 +1,14 @@
 import express from "express";
 import { spotifyApi } from "./spotify";
 import dotenv from "dotenv";
+import fs from "fs";
+import path from "path";
+
+const TOKEN_PATH = path.join(__dirname, "tokens.json");
 
 dotenv.config();
 
 const app = express();
-
-// Use the PORT environment variable provided by Heroku or default to 8888
 const port = process.env.PORT || 8888;
 
 let accessToken: string | null = null;
@@ -30,6 +32,8 @@ app.get("/callback", async (req, res) => {
     spotifyApi.setAccessToken(accessToken);
     spotifyApi.setRefreshToken(refreshToken);
 
+    saveTokensToFile(accessToken, refreshToken);
+
     res.send("Success! You can now close this tab.");
   } catch (err) {
     console.error("Error getting tokens:", err);
@@ -37,37 +41,56 @@ app.get("/callback", async (req, res) => {
   }
 });
 
-app.get("/token", (_req, res) => {
+app.get("/tokens", (_req, res) => {
+  loadTokensFromFile();
   if (accessToken && refreshToken) {
     res.json({ accessToken, refreshToken });
   } else {
-    res.status(400).send("Access token not available.");
+    res.status(400).send("Tokens are not available.");
   }
 });
+
+app.get("/refresh_token", async (_req, res) => {
+  try {
+    const data = await spotifyApi.refreshAccessToken();
+    accessToken = data.body["access_token"];
+    refreshToken = data.body["refresh_token"] ?? refreshToken;
+    spotifyApi.setAccessToken(accessToken);
+
+    saveTokensToFile(accessToken, refreshToken);
+
+    res.json({
+      accessToken: data.body["access_token"],
+      refreshToken: data.body["refresh_token"] ?? refreshToken,
+    });
+  } catch (err) {
+    console.error("Could not refresh access token", err);
+    res.status(500).send("Could not refresh access token.");
+  }
+});
+
+// Function to save tokens to a secure storage (e.g., database, file, etc.)
+export const saveTokensToFile = (accessToken: string, refreshToken: string) => {
+  const tokenData = { accessToken, refreshToken };
+  fs.writeFileSync(TOKEN_PATH, JSON.stringify(tokenData));
+};
+
+// Function to load tokens from secure storage
+export const loadTokensFromFile = () => {
+  if (fs.existsSync(TOKEN_PATH)) {
+    const tokenData = fs.readFileSync(TOKEN_PATH, "utf8");
+    const { accessToken: at, refreshToken: rt } = JSON.parse(tokenData);
+    spotifyApi.setAccessToken(at);
+    spotifyApi.setRefreshToken(rt); // Fixing this line
+    accessToken = at;
+    refreshToken = rt;
+  }
+};
+
+// Load tokens on server start
+loadTokensFromFile();
 
 // Start the Express server on the correct port
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
-});
-
-app.get("/refresh_token", function (req, res) {
-  const accessToken = req.query.accessToken;
-  const refreshToken = req.query.refreshToken;
-
-  spotifyApi.setAccessToken(accessToken);
-  spotifyApi.setRefreshToken(refreshToken);
-
-  spotifyApi.refreshAccessToken().then(
-    function (data) {
-      // Save the access token so that it's used in future calls
-      spotifyApi.setAccessToken(data.body["access_token"]);
-      res.json({
-        accessToken: data.body["access_token"],
-        refreshToken: refreshToken,
-      });
-    },
-    function (err) {
-      console.log("Could not refresh access token", err);
-    }
-  );
 });
