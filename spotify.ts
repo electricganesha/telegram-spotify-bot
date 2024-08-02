@@ -69,6 +69,17 @@ export const addToPlaylist = async (trackId: string, playlistId: string) => {
   ]);
 };
 
+export const existsInPlaylist = async (trackId: string, playlistId: string) => {
+  await refreshAccessToken();
+
+  const data = await spotifyApi.getPlaylistTracks(playlistId);
+
+  if (data.body.items.length > 0) {
+    return data.body.items.some((item: any) => item.track.id === trackId);
+  }
+  return false;
+};
+
 export const extractSongInfoFromSpotifyLink = async (link: string) => {
   await refreshAccessToken();
 

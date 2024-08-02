@@ -6,6 +6,7 @@ import {
   getAndSetTokens,
   getIsUserAuthenticated,
   extractTrackIdFromSpotifyLink,
+  existsInPlaylist,
 } from "./spotify";
 
 dotenv.config();
@@ -37,6 +38,16 @@ bot.on("message", async (msg: Message) => {
 
     if (songInfo) {
       try {
+        const exists = await existsInPlaylist(trackId, SPOTIFY_PLAYLIST_ID);
+
+        if (exists) {
+          botSendMessageAndLog(
+            chatId,
+            `Track ${songInfo.song} by ${songInfo.artist} has already been added to the playlist.`
+          );
+          return;
+        }
+
         if (trackId) {
           await addToPlaylist(songInfo.id, SPOTIFY_PLAYLIST_ID);
           botSendMessageAndLog(
