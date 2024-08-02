@@ -18,6 +18,27 @@ const SPOTIFY_PLAYLIST_ID = process.env.SPOTIFY_PLAYLIST_ID;
 
 const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
 
+bot.onText(/\/sayhello/, (msg) => {
+  const chatId = msg.chat.id;
+  bot.sendMessage(
+    chatId,
+    "Howdy! 👋 I'm SJGBot, thanks for adding me on this group - while I'm active on this channel, every Spotify track that you post here should be added to the shared playlist SJGMusica - https://open.spotify.com/playlist/2oDuWypQijN5ivUbTgopWp?si=1b4841f4dbcb4c40 - I've also populated the playlist with all the songs you've added to the channel so far! Enjoy your music! 🎧"
+  );
+});
+
+bot.onText(/\/version/, (msg) => {
+  const chatId = msg.chat.id;
+  bot.sendMessage(chatId, "SJGMusic Bot -> v1.0.0");
+});
+
+bot.onText(/\/playlist/, (msg) => {
+  const chatId = msg.chat.id;
+  bot.sendMessage(
+    chatId,
+    "The shared playlist for SJGMusica can be found at: https://open.spotify.com/playlist/2oDuWypQijN5ivUbTgopWp?si=1b4841f4dbcb4c40 - Enjoy your music! 🎧"
+  );
+});
+
 bot.on("message", async (msg: Message) => {
   const chatId = msg.chat.id;
   const text = msg.text;
