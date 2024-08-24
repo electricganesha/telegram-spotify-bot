@@ -1,3 +1,21 @@
+// Global error handler
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  process.exit(1); // Optional: exit the process after logging the error
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1); // Optional: exit the process after logging the error
+});
+
+// Graceful shutdown on SIGTERM
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  // Perform any necessary cleanup here
+  process.exit(0);
+});
+
 import dotenv from "dotenv";
 import { Message } from "node-telegram-bot-api";
 import {
